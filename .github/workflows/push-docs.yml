@@ -14,10 +14,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: GitHEE-UMCU
+
       - name: Trigger docs-source rebuild
         run: |
           curl -X POST \
-            -H "Authorization: token ${{ secrets.DOCS_REBUILD_TOKEN }}" \
+            -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/GitHEE-UMCU/docs-source/actions/workflows/rebuild-site.yml/dispatches" \
             -d '{"ref":"main"}'
