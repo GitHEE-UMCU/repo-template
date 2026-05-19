@@ -1,4 +1,4 @@
-name: Push Docs to Central Site
+name: Trigger Docs Rebuild
 
 on:
   push:
@@ -10,52 +10,14 @@ on:
       - 'README.md'
 
 jobs:
-  push-docs:
+  trigger-rebuild:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout this repo
-        uses: actions/checkout@v4
-
-      - name: Generate GitHub App Token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: GitHEE-UMCU
-
-      - name: Checkout central docs site
-        uses: actions/checkout@v4
-        with:
-          repository: GitHEE-UMCU/GitHEE-UMCU.github.io
-          token: ${{ steps.app-token.outputs.token }}
-          path: central-docs
-
-      - name: Copy docs into central site
+      - name: Trigger docs-source rebuild
         run: |
-          REPO_NAME="${{ github.event.repository.name }}"
-          mkdir -p central-docs/docs/$REPO_NAME
-          if [ -f README.md ]; then
-            cp README.md central-docs/docs/$REPO_NAME/index.md
-          fi
-          if [ -d docs ]; then
-            cp -r docs/. central-docs/docs/$REPO_NAME/
-          fi
-
-      - name: Copy manifest into central site
-        run: |
-          REPO_NAME="${{ github.event.repository.name }}"
-          mkdir -p central-docs/manifests
-          if [ -f repo-manifest.yml ]; then
-            cp repo-manifest.yml central-docs/manifests/$REPO_NAME.yml
-          fi
-
-      - name: Commit and push to central site
-        run: |
-          cd central-docs
-          git config user.name "GitHEE-UMCU Docs Bot"
-          git config user.email "docs-bot@gitHEE-UMCU.github.io"
-          git add .
-          git diff --staged --quiet || git commit -m "docs(${{ github.event.repository.name }}): update from ${{ github.sha }}"
-          git push
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.DOCS_REBUILD_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/GitHEE-UMCU/docs-source/actions/workflows/rebuild-site.yml/dispatches" \
+            -d '{"ref":"main"}'
