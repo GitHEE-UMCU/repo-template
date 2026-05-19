@@ -1,0 +1,47 @@
+name: Push Docs to Central Site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+
+jobs:
+  push-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          installation-id: ${{ secrets.APP_INSTALLATION_ID }}
+          owner: GitHEE-UMCU
+
+      - name: Checkout central docs site
+        uses: actions/checkout@v4
+        with:
+          repository: GitHEE-UMCU/GitHEE-UMCU.github.io
+          token: ${{ steps.app-token.outputs.token }}
+          path: central-docs
+
+      - name: Copy docs into central site
+        run: |
+          REPO_NAME="${{ github.event.repository.name }}"
+          mkdir -p central-docs/docs/$REPO_NAME
+          cp -r docs/. central-docs/docs/$REPO_NAME/
+
+      - name: Commit and push to central site
+        run: |
+          cd central-docs
+          git config user.name "GitHEE-UMCU Docs Bot"
+          git config user.email "docs-bot@gitHEE-UMCU.github.io"
+          git add .
+          git diff --staged --quiet || git commit -m "docs(${{ github.event.repository.name }}): update from ${{ github.sha }}"
+          git push
