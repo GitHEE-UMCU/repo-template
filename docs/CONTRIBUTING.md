@@ -6,7 +6,7 @@ This repository contributes to the central docs site at [GitHEE-UMCU.github.io](
 
 To keep the site up to date:
 
-1. **Fill out `repo-manifest.yml`** in the repo root — this controls how your repo is categorized on the site.
+1. **Fill out `docs/repo-manifest.yml`** — this controls how your repo is categorized on the site.
 2. **Keep `docs/index.md` current** — this is the landing page for your repo on the docs site. If it's missing, `README.md` is used as a fallback.
 
 The site updates automatically when you push changes to `main`.
